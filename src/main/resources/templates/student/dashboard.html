@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::main}, 'Dashboard',
+      'Welcome back, ' + ${student.fullName}, ${student}, 'dashboard')}"
+      xmlns:th="http://www.thymeleaf.org">
+<head><title>Dashboard</title></head>
+<body>
+<main>
+<!-- Stats -->
+<div class="stats-grid fade-up">
+  <div class="stat-card" style="--card-color:#6c63ff">
+    <div class="stat-icon">📋</div>
+    <div class="stat-label">Total Applied</div>
+    <div class="stat-value" th:text="${applications.size()}">0</div>
+  </div>
+  <div class="stat-card" style="--card-color:#f59e0b">
+    <div class="stat-icon">⏳</div>
+    <div class="stat-label">Pending Review</div>
+    <div class="stat-value" th:text="${pendingCount}">0</div>
+  </div>
+  <div class="stat-card" style="--card-color:#22c55e">
+    <div class="stat-icon">⭐</div>
+    <div class="stat-label">Shortlisted</div>
+    <div class="stat-value" th:text="${shortlistedCount}">0</div>
+  </div>
+  <div class="stat-card" style="--card-color:#a78bfa">
+    <div class="stat-icon">📅</div>
+    <div class="stat-label">Interviews</div>
+    <div class="stat-value" th:text="${scheduledCount}">0</div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- Recent Applications -->
+  <div class="card fade-up fade-up-1">
+    <div class="card-header">
+      <div>
+        <div class="card-title">📋 Recent Applications</div>
+        <div class="card-subtitle">Your latest job applications</div>
+      </div>
+      <a th:href="@{/student/applications}" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    <div th:if="${applications.empty}" class="empty-state">
+      <div class="icon">📭</div>
+      <p>No applications yet. <a th:href="@{/student/jobs}">Browse jobs</a></p>
+    </div>
+    <div class="timeline" th:if="${!applications.empty}">
+      <div class="timeline-item" th:each="app,i : ${applications}" th:if="${i.index < 5}">
+        <div class="timeline-dot">💼</div>
+        <div class="timeline-body">
+          <div class="timeline-title" th:text="${app.job.title}">Job Title</div>
+          <div class="timeline-sub" th:text="${app.job.employer.fullName}">Company</div>
+          <div style="margin-top:6px;">
+            <span class="badge"
+                  th:classappend="${app.status.name() == 'PENDING'} ? 'badge-pending' :
+                                  (${app.status.name() == 'SHORTLISTED'} ? 'badge-shortlisted' :
+                                  (${app.status.name() == 'SELECTED'} ? 'badge-selected' :
+                                  (${app.status.name() == 'REJECTED'} ? 'badge-rejected' :
+                                  (${app.status.name() == 'INTERVIEW_SCHEDULED'} ? 'badge-scheduled' : 'badge-review'))))"
+                  th:text="${app.status.name().replace('_',' ')}">Status</span>
+          </div>
+          <div class="timeline-date" th:text="${#temporals.format(app.appliedAt,'dd MMM yyyy')}"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right column -->
+  <div>
+    <div class="card fade-up fade-up-2" th:if="${!interviews.empty}">
+      <div class="card-header">
+        <div class="card-title">📅 Upcoming Interviews</div>
+      </div>
+      <div class="timeline">
+        <div class="timeline-item" th:each="iv : ${interviews}">
+          <div class="timeline-dot">🎤</div>
+          <div class="timeline-body">
+            <div class="timeline-title" th:text="${iv.application.job.title}">Job</div>
+            <div class="timeline-sub" th:text="${iv.venue ?: iv.meetLink ?: 'TBD'}">Venue</div>
+            <div class="timeline-date"
+                 th:text="${#temporals.format(iv.interviewDate,'dd MMM yyyy')} + ' at ' + ${iv.slot}"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Completeness -->
+    <div class="card fade-up fade-up-3">
+      <div class="card-header">
+        <div class="card-title">👤 Profile Completeness</div>
+        <a th:href="@{/student/profile}" class="btn btn-outline btn-sm">Edit</a>
+      </div>
+      <div th:with="score=${(profile.skills != null ? 20 : 0) +
+                            (profile.resumePath != null ? 30 : 0) +
+                            (profile.department != null ? 15 : 0) +
+                            (profile.cgpa != null ? 15 : 0) +
+                            (profile.linkedinUrl != null ? 10 : 0) +
+                            (profile.githubUrl != null ? 10 : 0)}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:13px;color:var(--text-muted)">Profile strength</span>
+          <span style="font-weight:700;color:var(--primary)" th:text="${score} + '%'">0%</span>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" th:style="'width:' + ${score} + '%'"></div>
+        </div>
+        <div style="margin-top:14px;display:flex;flex-direction:column;gap:6px;font-size:13px;">
+          <div th:style="${profile.resumePath != null ? 'color:var(--success)' : 'color:var(--text-muted)'}">
+            <span th:text="${profile.resumePath != null ? '✅' : '⬜'}"></span> Resume Uploaded
+          </div>
+          <div th:style="${profile.skills != null ? 'color:var(--success)' : 'color:var(--text-muted)'}">
+            <span th:text="${profile.skills != null ? '✅' : '⬜'}"></span> Skills Listed
+          </div>
+          <div th:style="${profile.department != null ? 'color:var(--success)' : 'color:var(--text-muted)'}">
+            <span th:text="${profile.department != null ? '✅' : '⬜'}"></span> Academic Details
+          </div>
+          <div th:style="${profile.linkedinUrl != null ? 'color:var(--success)' : 'color:var(--text-muted)'}">
+            <span th:text="${profile.linkedinUrl != null ? '✅' : '⬜'}"></span> LinkedIn Profile
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card fade-up fade-up-4">
+  <div class="card-title" style="margin-bottom:14px;">📅 Recruitment Calendar</div>
+  <div id="calendar" style="min-height:500px; background:#fff; padding:15px; border-radius:12px;"></div>
+</div>
+
+<div class="card fade-up fade-up-5">
+  <div class="card-title" style="margin-bottom:14px;">⚡ Quick Actions</div>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;">
+    <a th:href="@{/student/jobs}"         class="btn btn-primary">💼 Browse Jobs</a>
+    <a th:href="@{/student/profile}"      class="btn btn-outline">👤 Update Profile</a>
+    <a th:href="@{/student/applications}" class="btn btn-outline">📋 My Applications</a>
+  </div>
+</div>
+
+<!-- FullCalendar -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            themeSystem: 'standard',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek'
+            },
+            events: [[${calendarEvents}]],
+            eventClick: function(info) {
+                alert(info.event.title);
+            }
+        });
+        calendar.render();
+    });
+</script>
+</main>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::main}, 'Interview Schedule', 'All scheduled interviews', ${employer}, 'schedule')}"
+      xmlns:th="http://www.thymeleaf.org">
+<head><title>Schedule</title></head>
+<body>
+<main>
+<!-- Stats row -->
+<div class="stats-grid fade-up" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:20px;">
+  <div class="stat-card" style="--card-color:#6c63ff;padding:14px;">
+    <div class="stat-label">Total Interviews</div>
+    <div class="stat-value" style="font-size:24px;" th:text="${interviews.size()}">0</div>
+  </div>
+  <div class="stat-card" style="--card-color:#22c55e;padding:14px;">
+    <div class="stat-label">Scheduled</div>
+    <div class="stat-value" style="font-size:24px;"
+         th:text="${interviews.?[status.name() == 'SCHEDULED'].size()}">0</div>
+  </div>
+  <div class="stat-card" style="--card-color:#a78bfa;padding:14px;">
+    <div class="stat-label">Completed</div>
+    <div class="stat-value" style="font-size:24px;"
+         th:text="${interviews.?[status.name() == 'COMPLETED'].size()}">0</div>
+  </div>
+</div>
+
+<div class="card fade-up fade-up-1">
+  <div class="card-header">
+    <div class="card-title">📅 All Interviews</div>
+  </div>
+  <div class="empty-state" th:if="${interviews.empty}">
+    <div class="icon">📅</div>
+    <p>No interviews scheduled yet. Shortlist candidates and schedule from the Applicants page.</p>
+  </div>
+  <div class="table-wrap" th:if="${!interviews.empty}">
+    <table>
+      <thead>
+        <tr>
+          <th>Candidate</th>
+          <th>Position</th>
+          <th>Date &amp; Time</th>
+          <th>Venue</th>
+          <th>Interviewer</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="iv : ${interviews}">
+          <td>
+            <div style="font-weight:600;" th:text="${iv.application.student.fullName}">Name</div>
+            <div style="font-size:12px;color:var(--text-muted);" th:text="${iv.application.student.email}"></div>
+          </td>
+          <td style="font-size:13px;" th:text="${iv.application.job.title}">Job</td>
+          <td>
+            <div style="font-weight:600;color:var(--accent);"
+                 th:text="${#temporals.format(iv.interviewDate,'dd MMM yyyy')}"></div>
+            <div style="font-size:12px;color:var(--text-muted);" th:text="${iv.slot}"></div>
+          </td>
+          <td style="font-size:13px;">
+            <div th:text="${iv.venue ?: '—'}"></div>
+            <a th:if="${iv.meetLink != null}" th:href="${iv.meetLink}" target="_blank"
+               style="font-size:12px;color:var(--primary);">🔗 Meeting Link</a>
+          </td>
+          <td style="font-size:13px;" th:text="${iv.interviewerName ?: '—'}"></td>
+          <td>
+            <span class="badge"
+                  th:classappend="${iv.status.name() == 'SCHEDULED'} ? 'badge-scheduled' :
+                                  (${iv.status.name() == 'COMPLETED'} ? 'badge-selected' :
+                                  (${iv.status.name() == 'CANCELLED'} ? 'badge-rejected' : 'badge-review'))"
+                  th:text="${iv.status.name()}">Status</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</main>
+</body>
+</html>

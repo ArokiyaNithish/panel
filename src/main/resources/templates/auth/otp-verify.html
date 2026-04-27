@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Verify OTP — Campus Recruitment Portal</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+<div class="auth-page">
+    <div class="auth-card fade-up">
+        <div class="auth-logo">
+            <div class="icon">🔒</div>
+            <div class="auth-logo-text">Security<small>Verify your identity</small></div>
+        </div>
+
+        <h1 class="auth-title">Verify OTP</h1>
+        <p class="auth-subtitle">We've sent a 6-digit code to your email <strong th:text="${email}"></strong></p>
+
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+        <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+
+        <form th:action="@{/auth/verify-otp}" method="post">
+            <input type="hidden" name="email" th:value="${email}"/>
+            <input type="hidden" name="type" th:value="${type}"/>
+            
+            <div class="form-group">
+                <label class="form-label" for="otp">Enter 6-Digit Code</label>
+                <input id="otp" type="text" name="otp" class="form-control" 
+                       placeholder="000000" maxlength="6" pattern="\d{6}" 
+                       style="text-align:center; font-size:24px; letter-spacing:10px; font-weight:700;" 
+                       required autofocus/>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px;">
+                Verify & Continue →
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            Didn't receive the code? 
+            <form th:action="@{/auth/resend-otp}" method="post" style="display:inline;">
+                <input type="hidden" name="email" th:value="${email}"/>
+                <input type="hidden" name="type" th:value="${type}"/>
+                <button type="submit" style="background:none; border:none; color:var(--primary); cursor:pointer; font-weight:600; padding:0;">Resend</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

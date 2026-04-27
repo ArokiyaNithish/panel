@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::main}, 'My Profile', 'Manage your academic profile and resume', ${student}, 'profile')}"
+      xmlns:th="http://www.thymeleaf.org">
+<head><title>Profile</title></head>
+<body>
+<main>
+<div class="grid-2">
+  <!-- Profile Form -->
+  <div>
+    <div class="card fade-up">
+      <div class="card-header">
+        <div>
+          <div class="card-title">🧑‍🎓 Personal Information</div>
+          <div class="card-subtitle">Update your basic details</div>
+        </div>
+      </div>
+      <form th:action="@{/student/profile/update}" method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input type="text" name="fullName" class="form-control" th:value="${student.fullName}" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <input type="tel" name="phone" class="form-control" th:value="${student.phone}"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Department</label>
+            <input type="text" name="department" class="form-control" th:value="${profile.department}" placeholder="Computer Science"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Degree</label>
+            <input type="text" name="degree" class="form-control" th:value="${profile.degree}" placeholder="B.Tech"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Year / Batch</label>
+            <input type="text" name="year" class="form-control" th:value="${profile.year}" placeholder="2025"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Roll Number</label>
+            <input type="text" name="rollNumber" class="form-control" th:value="${profile.rollNumber}"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">CGPA</label>
+          <input type="number" name="cgpa" class="form-control" step="0.01" min="0" max="10" th:value="${profile.cgpa}" placeholder="8.5"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Skills (comma-separated)</label>
+          <input type="text" name="skills" class="form-control" th:value="${profile.skills}" placeholder="Java, Python, SQL, Spring Boot"/>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">🔗 LinkedIn URL</label>
+            <input type="url" name="linkedinUrl" class="form-control" th:value="${profile.linkedinUrl}" placeholder="https://linkedin.com/in/..."/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">🐙 GitHub URL</label>
+            <input type="url" name="githubUrl" class="form-control" th:value="${profile.githubUrl}" placeholder="https://github.com/..."/>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">💾 Save Profile</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Resume + AI Info -->
+  <div>
+    <!-- Resume Upload -->
+    <div class="card fade-up fade-up-1">
+      <div class="card-header">
+        <div>
+          <div class="card-title">📄 Resume</div>
+          <div class="card-subtitle">Upload PDF — AI will auto-parse it</div>
+        </div>
+        <span class="badge badge-active" th:if="${profile.resumePath != null}">✅ Uploaded</span>
+      </div>
+      <form th:action="@{/student/profile/upload-resume}" method="post" enctype="multipart/form-data">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <div class="form-group">
+          <label class="form-label">Choose PDF Resume</label>
+          <input type="file" name="resume" accept=".pdf" class="form-control" required/>
+        </div>
+        <button type="submit" class="btn btn-accent" style="width:100%;justify-content:center">🤖 Upload &amp; AI Parse</button>
+      </form>
+      <div th:if="${profile.resumePath != null}" style="margin-top:12px;">
+        <a th:href="@{'/uploads/' + ${profile.resumePath}}" target="_blank" class="btn btn-outline btn-sm" style="width:100%;justify-content:center">👁 View Current Resume</a>
+      </div>
+    </div>
+
+    <!-- AI Extracted Info -->
+    <div class="card fade-up fade-up-2" th:if="${profile.summary != null}">
+      <div class="card-header">
+        <div class="card-title">🤖 AI-Extracted Profile</div>
+      </div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.7;" th:text="${profile.summary}"></div>
+      <div class="divider"></div>
+      <div th:if="${profile.technicalSkills != null}">
+        <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">TECHNICAL SKILLS</div>
+        <div class="job-skills">
+          <span class="skill-tag" th:each="skill : ${#strings.arraySplit(profile.technicalSkills, ',')}"
+                th:text="${#strings.trim(skill)}"></span>
+        </div>
+      </div>
+      <div th:if="${profile.certifications != null}" style="margin-top:12px;">
+        <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:4px;">CERTIFICATIONS</div>
+        <div style="font-size:13px;" th:text="${profile.certifications}"></div>
+      </div>
+      <div th:if="${profile.experience != null}" style="margin-top:12px;">
+        <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:4px;">EXPERIENCE</div>
+        <div style="font-size:13px;" th:text="${profile.experience}"></div>
+      </div>
+    </div>
+
+    <!-- Profile Strength -->
+    <div class="card fade-up fade-up-3">
+      <div class="card-title" style="margin-bottom:12px;">💪 Profile Strength</div>
+      <div th:with="score=${(profile.skills != null ? 20 : 0) +
+                            (profile.resumePath != null ? 30 : 0) +
+                            (profile.department != null ? 15 : 0) +
+                            (profile.cgpa != null ? 15 : 0) +
+                            (profile.linkedinUrl != null ? 10 : 0) +
+                            (profile.githubUrl != null ? 10 : 0)}">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;">
+          <span style="color:var(--text-muted)">Completion</span>
+          <span style="color:var(--primary);font-weight:700;" th:text="${score} + '%'">0%</span>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" th:style="'width:' + ${score} + '%'"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</main>
+</body>
+</html>

@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Application Error</title>
+</head>
+<body style="font-family: sans-serif; padding: 20px;">
+    <h1 style="color: #ef4444;">Oops! An error occurred.</h1>
+    <h3 th:text="${errorMessage}"></h3>
+    <pre style="background: #f4f4f4; padding: 16px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap;" th:text="${errorDetails}"></pre>
+    <a href="javascript:history.back()" style="display:inline-block; margin-top:20px; padding: 10px 20px; background: #6c63ff; color: #fff; text-decoration: none; border-radius: 5px;">Go Back</a>
+</body>
+</html>

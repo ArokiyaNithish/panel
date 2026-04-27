@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::main}, 'Employer Dashboard', 'Manage your recruitment pipeline', ${employer}, 'dashboard')}"
+      xmlns:th="http://www.thymeleaf.org">
+<head><title>Employer Dashboard</title></head>
+<body>
+<main>
+<!-- Stats -->
+<div class="stats-grid fade-up">
+  <div class="stat-card" style="--card-color:#6c63ff">
+    <div class="stat-icon">💼</div>
+    <div class="stat-label">Active Jobs</div>
+    <div class="stat-value" th:text="${activeJobs}">0</div>
+  </div>
+  <div class="stat-card" style="--card-color:#f59e0b">
+    <div class="stat-icon">📬</div>
+    <div class="stat-label">Total Applications</div>
+    <div class="stat-value" th:text="${allApplications.size()}">0</div>
+  </div>
+  <div class="stat-card" style="--card-color:#a78bfa">
+    <div class="stat-icon">⭐</div>
+    <div class="stat-label">Shortlisted</div>
+    <div class="stat-value" th:text="${shortlistedCount}">0</div>
+  </div>
+  <div class="stat-card" style="--card-color:#22c55e">
+    <div class="stat-icon">🏆</div>
+    <div class="stat-label">Selected</div>
+    <div class="stat-value" th:text="${selectedCount}">0</div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- My Jobs -->
+  <div class="card fade-up fade-up-1">
+    <div class="card-header">
+      <div>
+        <div class="card-title">💼 My Jobs</div>
+        <div class="card-subtitle" th:text="${jobs.size()} + ' total postings'"></div>
+      </div>
+      <a th:href="@{/employer/jobs/new}" class="btn btn-primary btn-sm">+ Post Job</a>
+    </div>
+    <div th:if="${jobs.empty}" class="empty-state">
+      <div class="icon">📝</div>
+      <p>No jobs posted yet.</p>
+    </div>
+    <div class="table-wrap" th:if="${!jobs.empty}">
+      <table>
+        <thead><tr><th>Title</th><th>Applications</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr th:each="job : ${jobs}">
+            <td>
+              <a th:href="@{'/employer/jobs/' + ${job.id} + '/applicants'}"
+                 style="font-weight:600;color:var(--primary);" th:text="${job.title}">Title</a>
+              <div style="font-size:12px;color:var(--text-muted);" th:text="${job.location}"></div>
+            </td>
+            <td>
+              <span style="font-weight:700;" th:text="${job.applications.size()}">0</span>
+              <span style="color:var(--text-muted);font-size:12px;"> applicants</span>
+            </td>
+            <td>
+              <span class="badge"
+                    th:classappend="${job.status.name() == 'ACTIVE'} ? 'badge-active' :
+                                    (${job.status.name() == 'CLOSED'} ? 'badge-closed' : 'badge-draft')"
+                    th:text="${job.status.name()}">Status</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Upcoming Interviews -->
+  <div class="card fade-up fade-up-2">
+    <div class="card-header">
+      <div class="card-title">📅 Upcoming Interviews</div>
+      <a th:href="@{/employer/schedule}" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    <div th:if="${upcomingInterviews.empty}" class="empty-state">
+      <div class="icon">📅</div>
+      <p>No interviews scheduled.</p>
+    </div>
+    <div class="timeline" th:if="${!upcomingInterviews.empty}">
+      <div class="timeline-item" th:each="iv : ${upcomingInterviews}">
+        <div class="timeline-dot">🎤</div>
+        <div class="timeline-body">
+          <div class="timeline-title" th:text="${iv.application.student.fullName}">Student</div>
+          <div class="timeline-sub" th:text="${iv.application.job.title}">Job</div>
+          <div class="timeline-date"
+               th:text="${#temporals.format(iv.interviewDate,'dd MMM yyyy')} + ' at ' + ${iv.slot}"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Applications -->
+<div class="card fade-up fade-up-3">
+  <div class="card-header">
+    <div class="card-title">📬 Recent Applications</div>
+  </div>
+  <div th:if="${allApplications.empty}" class="empty-state">
+    <div class="icon">📭</div><p>No applications yet.</p>
+  </div>
+  <div class="table-wrap" th:if="${!allApplications.empty}">
+    <table>
+      <thead><tr><th>Candidate</th><th>Job</th><th>AI Score</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr th:each="app,i : ${allApplications}" th:if="${i.index < 8}">
+          <td>
+            <div style="font-weight:600;" th:text="${app.student.fullName}">Name</div>
+            <div style="font-size:12px;color:var(--text-muted);" th:text="${app.student.email}"></div>
+          </td>
+          <td th:text="${app.job.title}">Job</td>
+          <td>
+            <span th:if="${app.aiMatchScore != null}" style="font-weight:700;color:var(--primary);"
+                  th:text="${#numbers.formatDecimal(app.aiMatchScore,1,0)} + '%'"></span>
+            <span th:if="${app.aiMatchScore == null}" style="color:var(--text-muted)">—</span>
+          </td>
+          <td>
+            <span class="badge"
+                  th:classappend="${app.status.name() == 'PENDING'} ? 'badge-pending' :
+                                  (${app.status.name() == 'SHORTLISTED'} ? 'badge-shortlisted' :
+                                  (${app.status.name() == 'SELECTED'} ? 'badge-selected' : 'badge-review'))"
+                  th:text="${app.status.name().replace('_',' ')}">Status</span>
+          </td>
+          <td style="font-size:12px;" th:text="${#temporals.format(app.appliedAt,'dd MMM')}"></td>
+          <td>
+            <a th:href="@{'/employer/jobs/' + ${app.job.id} + '/applicants'}" class="btn btn-outline btn-xs">Review →</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<!-- Analytics Section -->
+<div class="card fade-up fade-up-4" style="margin-top:20px;">
+  <div class="card-title" style="margin-bottom:16px;">📊 Recruitment Funnel</div>
+  <div style="max-width:500px; margin:auto;">
+    <canvas id="employerAppChart"></canvas>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('employerAppChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Pending', 'Shortlisted', 'Selected', 'Rejected'],
+                datasets: [{
+                    data: [ [[${pendingCount}]], [[${shortlistedCount}]], [[${selectedCount}]], [[${rejectedCount}]] ],
+                    backgroundColor: ['#f59e0b', '#a78bfa', '#22c55e', '#ef4444'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    });
+</script>
+</body>
+</html>

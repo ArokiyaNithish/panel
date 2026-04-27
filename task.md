@@ -1,0 +1,28 @@
+# Campus Recruitment Portal Task List
+
+- [ ] **Phase 1: Project Initialization**
+    - [ ] Create `pom.xml` with all dependencies
+    - [ ] Set up directory structure
+    - [ ] Configure `application.properties` (SQL Server, Security, Gemini)
+- [ ] **Phase 2: Core Backend (Entities & Repositories)**
+    - [ ] `User` & `Role` entities
+    - [ ] `StudentProfile` entity
+    - [ ] `Job` entity
+    - [ ] `Application` entity
+    - [ ] `Notification` & `Interview` entities
+- [ ] **Phase 3: Security & Services**
+    - [ ] Spring Security configuration (BCrypt, Role-based)
+    - [ ] Authentication Service & Controller
+    - [ ] Gemini AI Service (Resume Parsing)
+    - [ ] Email & Notification Services
+- [ ] **Phase 4: Controllers & Business Logic**
+    - [ ] Student Controllers (Job search, Profile, Applications)
+    - [ ] Employer Controllers (Job posting, Shortlisting, Interview scheduling)
+    - [ ] Admin Controllers (Dashboard, Analytics, Company approval)
+- [ ] **Phase 5: Frontend Development (Thymeleaf + CSS)**
+    - [ ] Modern UI Layout & Theme
+    - [ ] Dashboards for all 3 roles
+    - [ ] Tracking progress bars and Charts
+- [ ] **Phase 6: Final Polish & Verification**
+    - [ ] Manual testing of flows
+    - [ ] "WOW" factor design review

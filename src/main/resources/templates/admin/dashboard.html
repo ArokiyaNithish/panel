@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::main}, 'Admin Dashboard', 'System-wide recruitment overview', ${admin}, 'dashboard')}"
+      xmlns:th="http://www.thymeleaf.org">
+<head><title>Admin Dashboard</title></head>
+<body>
+<main>
+<!-- Stats -->
+<div class="stats-grid fade-up">
+  <div class="stat-card" style="--card-color:#6c63ff">
+    <div class="stat-icon">🎓</div>
+    <div class="stat-label">Students</div>
+    <div class="stat-value" th:text="${totalStudents}">0</div>
+  </div>
+  <div class="stat-card" style="--card-color:#00d4aa">
+    <div class="stat-icon">🏢</div>
+    <div class="stat-label">Employers</div>
+    <div class="stat-value" th:text="${totalEmployers}">0</div>
+  </div>
+  <div class="stat-card" style="--card-color:#f59e0b">
+    <div class="stat-icon">⏳</div>
+    <div class="stat-label">Pending Approvals</div>
+    <div class="stat-value" th:text="${pendingEmployers}">0</div>
+  </div>
+  <div class="stat-card" style="--card-color:#22c55e">
+    <div class="stat-icon">💼</div>
+    <div class="stat-label">Active Jobs</div>
+    <div class="stat-value" th:text="${activeJobs}">0</div>
+  </div>
+  <div class="stat-card" style="--card-color:#a78bfa">
+    <div class="stat-icon">📋</div>
+    <div class="stat-label">Applications</div>
+    <div class="stat-value" th:text="${totalApplications}">0</div>
+  </div>
+  <div class="stat-card" style="--card-color:#ef4444">
+    <div class="stat-icon">🏆</div>
+    <div class="stat-label">Hired</div>
+    <div class="stat-value" th:text="${hiredCount}">0</div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- Pending Employer Approvals -->
+  <div class="card fade-up fade-up-1">
+    <div class="card-header">
+      <div>
+        <div class="card-title">⏳ Pending Employer Approvals</div>
+        <div class="card-subtitle" th:text="${pendingEmployersList.size()} + ' awaiting review'"></div>
+      </div>
+      <a th:href="@{/admin/users?role=EMPLOYER}" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    <div class="empty-state" th:if="${pendingEmployersList.empty}">
+      <div class="icon">✅</div>
+      <p>All employer accounts are approved.</p>
+    </div>
+    <div th:each="emp : ${pendingEmployersList}"
+         style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-weight:600;font-size:14px;" th:text="${emp.fullName}">Name</div>
+        <div style="font-size:12px;color:var(--text-muted);" th:text="${emp.email}">Email</div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <form th:action="@{'/admin/users/' + ${emp.id} + '/approve'}" method="post" style="margin:0">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+          <button class="btn btn-success btn-xs" type="submit">✅ Approve</button>
+        </form>
+        <form th:action="@{'/admin/users/' + ${emp.id} + '/reject'}" method="post" style="margin:0">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+          <button class="btn btn-danger btn-xs" type="submit">❌ Reject</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Jobs -->
+  <div class="card fade-up fade-up-2">
+    <div class="card-header">
+      <div class="card-title">💼 Recent Job Postings</div>
+      <a th:href="@{/admin/jobs}" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    <div th:if="${recentJobs.empty}" class="empty-state">
+      <div class="icon">📭</div><p>No jobs posted yet.</p>
+    </div>
+    <div th:each="job : ${recentJobs}"
+         style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-weight:600;font-size:14px;" th:text="${job.title}">Job</div>
+        <div style="font-size:12px;color:var(--text-muted);" th:text="${job.employer.fullName} + ' · ' + ${job.applications.size()} + ' applicants'"></div>
+      </div>
+      <span class="badge"
+            th:classappend="${job.status.name() == 'ACTIVE'} ? 'badge-active' :
+                            (${job.status.name() == 'CLOSED'} ? 'badge-closed' : 'badge-draft')"
+            th:text="${job.status.name()}"></span>
+    </div>
+  </div>
+</div>
+
+<!-- System Stats Card -->
+<div class="card fade-up fade-up-3">
+  <div class="card-title" style="margin-bottom:16px;">📊 Recruitment Analytics</div>
+  <div class="grid-2" style="gap:20px;">
+    <div style="min-height:300px; display:flex; flex-direction:column; align-items:center;">
+        <div style="font-size:14px; font-weight:600; margin-bottom:10px;">User Distribution</div>
+        <canvas id="userDistChart"></canvas>
+    </div>
+    <div style="min-height:300px; display:flex; flex-direction:column; align-items:center;">
+        <div style="font-size:14px; font-weight:600; margin-bottom:10px;">Application Funnel</div>
+        <canvas id="appFunnelChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="card fade-up fade-up-4" style="margin-top:20px;">
+  <div class="card-title" style="margin-bottom:16px;">💼 Job Distribution</div>
+  <div style="max-width:600px; margin:auto;">
+    <canvas id="jobDistChart"></canvas>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        // User Distribution Chart
+        const userCtx = document.getElementById('userDistChart').getContext('2d');
+        new Chart(userCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Students', 'Employers'],
+                datasets: [{
+                    data: [ [[${totalStudents}]], [[${totalEmployers}]] ],
+                    backgroundColor: ['#6c63ff', '#00d4aa'],
+                    borderWidth: 0
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // Application Funnel Chart
+        const appCtx = document.getElementById('appFunnelChart').getContext('2d');
+        new Chart(appCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Pending', 'Shortlisted', 'Selected', 'Rejected'],
+                datasets: [{
+                    label: 'Applications',
+                    data: [ [[${appStatus_PENDING}]], [[${appStatus_SHORTLISTED}]], [[${appStatus_SELECTED}]], [[${appStatus_REJECTED}]] ],
+                    backgroundColor: ['#f59e0b', '#a78bfa', '#22c55e', '#ef4444'],
+                    borderRadius: 8
+                }]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        // Job Distribution Chart
+        const jobCtx = document.getElementById('jobDistChart').getContext('2d');
+        new Chart(jobCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Active', 'Closed', 'Draft'],
+                datasets: [{
+                    data: [ [[${jobStatus_ACTIVE}]], [[${jobStatus_CLOSED}]], [[${jobStatus_DRAFT}]] ],
+                    backgroundColor: ['#22c55e', '#ef4444', '#94a3b8'],
+                    borderWidth: 0
+                }]
+            },
+            options: { responsive: true }
+        });
+    });
+</script>
+</main>
+</body>
+</html>

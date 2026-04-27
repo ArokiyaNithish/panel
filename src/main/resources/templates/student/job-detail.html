@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::main}, ${job.title}, ${job.employer.fullName}, ${student}, 'jobs')}"
+      xmlns:th="http://www.thymeleaf.org">
+<head><title>Job Detail</title></head>
+<body>
+<main>
+<div class="grid-2" style="align-items:start;">
+  <!-- Left: Full Job Details -->
+  <div>
+    <div class="card fade-up">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+        <div>
+          <h1 style="font-size:22px;font-weight:800;margin-bottom:6px;" th:text="${job.title}">Title</h1>
+          <div style="font-size:15px;color:var(--text-muted);" th:text="${job.employer.fullName}">Company</div>
+        </div>
+        <span class="badge badge-active">Open</span>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:12px;margin:16px 0;padding:16px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+        <div class="job-meta-item" th:if="${job.location}">📍 <span th:text="${job.location}"></span></div>
+        <div class="job-meta-item" th:if="${job.category}">🏷 <span th:text="${job.category}"></span></div>
+        <div class="job-meta-item" th:if="${job.experienceLevel}">🎯 <span th:text="${job.experienceLevel}"></span></div>
+        <div class="job-meta-item" th:if="${job.salaryRange}">💰 <span th:text="${job.salaryRange}"></span></div>
+        <div class="job-meta-item" th:if="${job.openings}">👥 <span th:text="${job.openings} + ' openings'"></span></div>
+        <div class="job-meta-item" th:if="${job.minCgpa}">📊 Min CGPA: <span th:text="${job.minCgpa}"></span></div>
+        <div class="job-meta-item" th:if="${job.deadline}">⏰ Deadline: <span th:text="${#temporals.format(job.deadline,'dd MMM yyyy')}"></span></div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:1px;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;">Description</div>
+        <div style="font-size:14px;line-height:1.8;white-space:pre-wrap;" th:text="${job.description}"></div>
+      </div>
+
+      <div th:if="${job.skillsRequired}" style="margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:1px;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;">Required Skills</div>
+        <div class="job-skills">
+          <span class="skill-tag" th:each="sk : ${#strings.arraySplit(job.skillsRequired, ',')}" th:text="${#strings.trim(sk)}"></span>
+        </div>
+      </div>
+
+      <div th:if="${job.eligibleDepartments}">
+        <div style="font-size:12px;font-weight:700;letter-spacing:1px;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;">Eligible Departments</div>
+        <div style="font-size:13px;" th:text="${job.eligibleDepartments}"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Apply + AI Match -->
+  <div>
+    <!-- AI Match Score -->
+    <div class="card fade-up fade-up-1" th:if="${matchJson != null and matchJson != '{}'}">
+      <div class="card-header">
+        <div class="card-title">🤖 AI Match Score</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:20px;">
+        <div class="score-ring" id="scoreRing">
+          <span id="scoreVal">—</span>
+          <small>/ 100</small>
+        </div>
+        <div>
+          <div id="scoreExpl" style="font-size:13px;color:var(--text-muted);line-height:1.6;"></div>
+        </div>
+      </div>
+      <div id="strengthsRow" style="margin-top:12px;display:none;">
+        <div style="font-size:11px;font-weight:700;color:var(--success);text-transform:uppercase;margin-bottom:4px;">Strengths</div>
+        <div id="strengthsList" style="font-size:12px;color:var(--success);"></div>
+      </div>
+      <div id="gapsRow" style="margin-top:8px;display:none;">
+        <div style="font-size:11px;font-weight:700;color:var(--warn);text-transform:uppercase;margin-bottom:4px;">Gaps to Bridge</div>
+        <div id="gapsList" style="font-size:12px;color:var(--warn);"></div>
+      </div>
+    </div>
+
+    <!-- Apply Card -->
+    <div class="card fade-up fade-up-2">
+      <div class="card-header">
+        <div class="card-title">🚀 Apply for this Job</div>
+      </div>
+      <div th:if="${alreadyApplied}" class="alert alert-info">
+        ✅ You've already applied for this position.
+      </div>
+      <form th:if="${!alreadyApplied}" th:action="@{'/student/jobs/' + ${job.id} + '/apply'}" method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <div class="form-group">
+          <label class="form-label">Cover Letter (Optional)</label>
+          <textarea name="coverLetter" class="form-control" rows="5"
+                    placeholder="Tell the employer why you're a great fit…"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;">
+          ✉️ Submit Application
+        </button>
+      </form>
+    </div>
+
+    <a th:href="@{/student/jobs}" class="btn btn-outline" style="width:100%;justify-content:center;">← Back to Jobs</a>
+  </div>
+</div>
+
+<script th:inline="javascript">
+  try {
+    var raw = /*[[${matchJson}]]*/ '{}';
+    raw = raw.replace(/```json/g,'').replace(/```/g,'').trim();
+    var m = JSON.parse(raw);
+    if (m.score !== undefined) {
+      document.getElementById('scoreVal').textContent = m.score;
+      var ring = document.getElementById('scoreRing');
+      var color = m.score >= 70 ? 'var(--success)' : m.score >= 40 ? 'var(--warn)' : 'var(--danger)';
+      ring.style.borderColor = color;
+      ring.querySelector('span').style.color = color;
+    }
+    if (m.explanation) document.getElementById('scoreExpl').textContent = m.explanation;
+    if (m.strengths) {
+      document.getElementById('strengthsRow').style.display='block';
+      document.getElementById('strengthsList').textContent = m.strengths;
+    }
+    if (m.gaps) {
+      document.getElementById('gapsRow').style.display='block';
+      document.getElementById('gapsList').textContent = m.gaps;
+    }
+  } catch(e) {}
+</script>
+</main>
+</body>
+</html>

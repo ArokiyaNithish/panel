@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Login — Campus Recruitment Portal</title>
+  <meta name="description" content="Sign in to the Campus Recruitment Portal to access jobs, applications, and AI-powered career tools."/>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+<div class="auth-page login-custom-bg">
+  <div class="auth-card fade-up">
+
+    <div class="auth-logo">
+      <div class="icon">🎓</div>
+      <div class="auth-logo-text">Campus Recruit<small>Placement Portal</small></div>
+    </div>
+
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="auth-subtitle">Sign in to continue to your dashboard</p>
+
+    <div th:if="${error}"   class="alert alert-error"   th:text="${error}"></div>
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+
+    <form th:action="@{/auth/login}" method="post">
+
+      <div class="form-group">
+        <label class="form-label" for="email">Email Address</label>
+        <input id="email" type="email" name="email" class="form-control"
+               placeholder="you@university.edu" required autofocus/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input id="password" type="password" name="password" class="form-control"
+               placeholder="••••••••" required/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Security Check</label>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <div style="background:#ffffff; color:#000000; padding:10px 16px; border-radius:6px; font-weight:800; font-size:18px; letter-spacing:3px; border:2px solid #ccc; user-select:none; display:inline-block;" th:text="${captchaQuestion}">5 + 3 = ?</div>
+            <input type="text" name="captcha" class="form-control" placeholder="Answer" required style="width:120px;"/>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;">
+        Sign In →
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      New here? <a th:href="@{/auth/register}">Create an account</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

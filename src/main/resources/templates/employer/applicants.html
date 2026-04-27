@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::main},
+      'Applicants — ' + ${job.title},
+      ${applications.size()} + ' applications received',
+      ${employer}, 'jobs')}"
+      xmlns:th="http://www.thymeleaf.org">
+<head><title>Applicants</title></head>
+<body>
+<main>
+<!-- Header -->
+<div class="card fade-up" style="margin-bottom:20px;padding:16px 20px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div>
+      <div style="font-size:20px;font-weight:800;" th:text="${job.title}">Job</div>
+      <div style="font-size:13px;color:var(--text-muted);">
+        <span th:text="${job.location}"></span>
+        <span th:if="${job.category}"> · <span th:text="${job.category}"></span></span>
+        <span> · <strong th:text="${applications.size()}">0</strong> applicants</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <a th:href="@{'/employer/jobs/' + ${job.id} + '/assessment'}" class="btn btn-sm" th:classappend="${hasAssessment} ? 'btn-primary' : 'btn-outline'">📝 Assessment</a>
+      <a th:href="@{'/employer/jobs/' + ${job.id} + '/edit'}" class="btn btn-outline btn-sm">✏️ Edit Job</a>
+      <a th:href="@{/employer/jobs}" class="btn btn-outline btn-sm">← Back</a>
+    </div>
+  </div>
+</div>
+
+<!-- Empty state -->
+<div class="empty-state card" th:if="${applications.empty}">
+  <div class="icon">📭</div>
+  <p>No applications yet. Share the job to attract candidates.</p>
+</div>
+
+<!-- Applicants Table -->
+<div class="card fade-up fade-up-1" th:if="${!applications.empty}">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Candidate</th>
+          <th>AI Match</th>
+          <th>Applied On</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="app : ${applications}" th:id="'row-' + ${app.id}">
+          <td>
+            <div style="font-weight:600;" th:text="${app.student.fullName}">Name</div>
+            <div style="font-size:12px;color:var(--text-muted);" th:text="${app.student.email}">Email</div>
+            <div style="font-size:12px;color:var(--text-muted);" th:text="${app.student.phone}"></div>
+          </td>
+
+          <!-- AI Score Bar -->
+          <td>
+            <div th:if="${app.aiMatchScore != null}" style="display:flex;align-items:center;gap:8px;min-width:110px;">
+              <div class="progress-bar-wrap" style="width:60px;">
+                <div class="progress-bar"
+                     th:style="'width:' + ${app.aiMatchScore} + '%'"
+                     th:styleappend="${app.aiMatchScore >= 70} ? 'background:var(--success)' :
+                                     (${app.aiMatchScore >= 40} ? 'background:var(--warn)' : 'background:var(--danger)')"></div>
+              </div>
+              <span style="font-size:13px;font-weight:700;"
+                    th:style="${app.aiMatchScore >= 70} ? 'color:var(--success)' :
+                               (${app.aiMatchScore >= 40} ? 'color:var(--warn)' : 'color:var(--danger)')"
+                    th:text="${#numbers.formatDecimal(app.aiMatchScore,1,0)} + '%'"></span>
+            </div>
+            <span th:if="${app.aiMatchScore == null}" style="color:var(--text-muted);font-size:12px;">—</span>
+          </td>
+
+          <td style="font-size:12px;" th:text="${#temporals.format(app.appliedAt,'dd MMM yyyy')}"></td>
+
+          <td>
+            <span class="badge"
+                  th:classappend="${app.status.name() == 'PENDING'} ? 'badge-pending' :
+                                  (${app.status.name() == 'SHORTLISTED'} ? 'badge-shortlisted' :
+                                  (${app.status.name() == 'SELECTED'} ? 'badge-selected' :
+                                  (${app.status.name() == 'REJECTED'} ? 'badge-rejected' :
+                                  (${app.status.name() == 'INTERVIEW_SCHEDULED'} ? 'badge-scheduled' : 'badge-review'))))"
+                  th:text="${app.status.name().replace('_',' ')}">Status</span>
+          </td>
+
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <!-- Update Status -->
+              <button class="btn btn-primary btn-xs"
+                      th:attr="data-id=${app.id},data-status=${app.status.name()}"
+                      onclick="var id=this.getAttribute('data-id'); var st=this.getAttribute('data-status'); openStatusModal(id, st);">
+                ✏️ Status
+              </button>
+              <!-- Schedule Interview -->
+              <button class="btn btn-accent btn-xs"
+                      th:if="${app.status.name() == 'SHORTLISTED' or app.status.name() == 'UNDER_REVIEW'}"
+                      th:attr="data-id=${app.id}"
+                      onclick="openScheduleModal(this.getAttribute('data-id'))">
+                📅 Schedule
+              </button>
+              <!-- View Cover Letter -->
+              <button class="btn btn-outline btn-xs"
+                      th:if="${app.coverLetter != null}"
+                      th:data-letter="${app.coverLetter}"
+                      onclick="showCoverLetter(this.getAttribute('data-letter'))">
+                📄 Letter
+              </button>
+              <!-- View Details -->
+              <button class="btn btn-outline btn-xs"
+                      th:with="prof=${studentProfiles.get(app.student.id)}"
+                      th:attr="data-dept=${prof != null ? prof.department : 'N/A'},
+                               data-degree=${prof != null ? prof.degree : 'N/A'},
+                               data-year=${prof != null ? prof.graduationYear : 'N/A'},
+                               data-cgpa=${prof != null ? prof.cgpa : 'N/A'},
+                               data-skills=${prof != null ? prof.skills : 'N/A'},
+                               data-resume=${prof != null ? prof.resumeUrl : ''}"
+                      onclick="openProfileModal(this)">
+                👁️ View Details
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── Status Update Modal ──────────────────────────────────────── -->
+<div id="statusModal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.7);" class="modal-overlay">
+  <div style="display:flex;align-items:center;justify-content:center;height:100%;">
+    <div class="card" style="width:400px;max-width:90vw;margin:0;">
+      <div class="card-header">
+        <div class="card-title">✏️ Update Application Status</div>
+        <button type="button" onclick="closeModal('statusModal')" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <form id="statusForm" th:action="@{/employer/applications/update-status}" method="post">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+      <input type="hidden" name="applicationId" id="statusAppId"/>
+      <div class="form-group">
+        <label class="form-label">New Status</label>
+        <select name="status" id="statusSelect" class="form-control">
+          <option value="PENDING">Pending</option>
+          <option value="UNDER_REVIEW">Under Review</option>
+          <option value="SHORTLISTED">Shortlisted</option>
+          <option value="INTERVIEW_SCHEDULED">Interview Scheduled</option>
+          <option value="SELECTED">Selected ✅</option>
+          <option value="REJECTED">Rejected ❌</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes for Candidate (Optional)</label>
+        <textarea name="notes" class="form-control" rows="3" placeholder="Add any feedback or notes…"></textarea>
+      </div>
+      <button type="submit" id="statusSubmitBtn" class="btn btn-primary" style="width:100%;justify-content:center;" disabled>Save Status</button>
+    </form>
+  </div>
+  </div>
+</div>
+
+<!-- ── Schedule Interview Modal ────────────────────────────────── -->
+<div id="scheduleModal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.7);" class="modal-overlay">
+  <div style="display:flex;align-items:center;justify-content:center;height:100%;">
+    <div class="card" style="width:460px;max-width:90vw;margin:0;">
+      <div class="card-header">
+        <div class="card-title">📅 Schedule Interview</div>
+        <button onclick="closeModal('scheduleModal')" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
+      </div>
+      <form id="scheduleForm" th:action="@{/employer/applications/schedule-interview}" method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <input type="hidden" name="applicationId" id="scheduleAppId"/>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Interview Date *</label>
+            <input type="date" name="interviewDate" class="form-control" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Time *</label>
+            <input type="time" name="interviewTime" class="form-control" required/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Venue / Location</label>
+          <input type="text" name="venue" class="form-control" placeholder="Room 301 / Online"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Meeting Link (if online)</label>
+          <input type="url" name="meetLink" class="form-control" placeholder="https://meet.google.com/..."/>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Interviewer Name</label>
+            <input type="text" name="interviewerName" class="form-control" placeholder="Dr. Sharma"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes for Candidate</label>
+          <textarea name="notes" class="form-control" rows="2" placeholder="Bring your resume, ID proof…"></textarea>
+        </div>
+        <button type="submit" id="scheduleSubmitBtn" class="btn btn-accent" style="width:100%;justify-content:center;" disabled>📅 Schedule &amp; Notify</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── Cover Letter Modal ──────────────────────────────────────── -->
+<div id="coverModal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.7);">
+  <div style="display:flex;align-items:center;justify-content:center;height:100%;">
+    <div class="card" style="width:500px;max-width:90vw;margin:0;max-height:80vh;overflow-y:auto;">
+      <div class="card-header">
+        <div class="card-title">📄 Cover Letter</div>
+        <button onclick="closeModal('coverModal')" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
+      </div>
+      <p id="coverLetterText" style="font-size:14px;line-height:1.8;color:var(--text-muted);white-space:pre-wrap;"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ── Profile Modal ──────────────────────────────────────── -->
+<div id="profileModal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.7);" class="modal-overlay">
+  <div style="display:flex;align-items:center;justify-content:center;height:100%;">
+    <div class="card" style="width:500px;max-width:90vw;margin:0;">
+      <div class="card-header">
+        <div class="card-title">👤 Student Profile</div>
+        <button onclick="closeModal('profileModal')" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
+      </div>
+      <table style="width:100%; font-size:14px;">
+        <tr><td style="padding:8px;font-weight:600;width:40%;">Department:</td><td id="p_dept" style="padding:8px;"></td></tr>
+        <tr><td style="padding:8px;font-weight:600;">Degree:</td><td id="p_degree" style="padding:8px;"></td></tr>
+        <tr><td style="padding:8px;font-weight:600;">Grad Year:</td><td id="p_year" style="padding:8px;"></td></tr>
+        <tr><td style="padding:8px;font-weight:600;">CGPA:</td><td id="p_cgpa" style="padding:8px;"></td></tr>
+        <tr><td style="padding:8px;font-weight:600;">Skills:</td><td id="p_skills" style="padding:8px;"></td></tr>
+        <tr><td style="padding:8px;font-weight:600;">Resume:</td><td style="padding:8px;"><a id="p_resume" href="#" target="_blank" class="btn btn-outline btn-xs">📄 View Resume</a></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openStatusModal(appId, currentStatus) {
+    console.log('Opening status modal for ID:', appId);
+    var modal = document.getElementById('statusModal');
+    modal.style.display = 'block';
+    var input = document.getElementById('statusAppId');
+    if (input) {
+      input.value = appId;
+      document.getElementById('statusSubmitBtn').disabled = !appId;
+    }
+    var select = document.getElementById('statusSelect');
+    if (select) select.value = currentStatus;
+  }
+  function openScheduleModal(appId) {
+    console.log('Opening schedule modal for ID:', appId);
+    var modal = document.getElementById('scheduleModal');
+    modal.style.display = 'block';
+    var input = document.getElementById('scheduleAppId');
+    if (input) {
+      input.value = appId;
+      document.getElementById('scheduleSubmitBtn').disabled = !appId;
+    }
+  }
+  function showCoverLetter(text) {
+    document.getElementById('coverLetterText').textContent = text;
+    document.getElementById('coverModal').style.display = 'block';
+  }
+  function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+  }
+  function openProfileModal(btn) {
+    document.getElementById('p_dept').textContent = btn.getAttribute('data-dept') && btn.getAttribute('data-dept') !== 'null' ? btn.getAttribute('data-dept') : 'N/A';
+    document.getElementById('p_degree').textContent = btn.getAttribute('data-degree') && btn.getAttribute('data-degree') !== 'null' ? btn.getAttribute('data-degree') : 'N/A';
+    document.getElementById('p_year').textContent = btn.getAttribute('data-year') && btn.getAttribute('data-year') !== 'null' ? btn.getAttribute('data-year') : 'N/A';
+    document.getElementById('p_cgpa').textContent = btn.getAttribute('data-cgpa') && btn.getAttribute('data-cgpa') !== 'null' ? btn.getAttribute('data-cgpa') : 'N/A';
+    document.getElementById('p_skills').textContent = btn.getAttribute('data-skills') && btn.getAttribute('data-skills') !== 'null' ? btn.getAttribute('data-skills') : 'N/A';
+    var resumeUrl = btn.getAttribute('data-resume');
+    var resLink = document.getElementById('p_resume');
+    if (resumeUrl && resumeUrl !== 'null') {
+      resLink.href = resumeUrl;
+      resLink.style.display = 'inline-block';
+    } else {
+      resLink.style.display = 'none';
+    }
+    document.getElementById('profileModal').style.display = 'block';
+  }
+  // Close modals on background click
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', function(e) { if(e.target === this) this.style.display = 'none'; });
+  });
+</script>
+</main>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::main}, 'Applications Management', 'Filter and track student applications', ${admin}, 'applications')}"
+      xmlns:th="http://www.thymeleaf.org">
+<head><title>Applications</title></head>
+<body>
+<main>
+<!-- Filter Tabs -->
+<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center;" class="fade-up">
+  <form method="get" th:action="@{/admin/applications}" style="display:flex;gap:10px;align-items:center;margin-right:15px;">
+     <input type="hidden" name="status" th:value="${selectedStatus}" />
+     <select name="companyId" class="input" style="width:200px;padding:8px;" onchange="this.form.submit()">
+        <option value="">🏢 All Companies</option>
+        <option th:each="emp : ${employers}" th:value="${emp.id}" th:text="${emp.fullName}" th:selected="${selectedCompanyId == emp.id}"></option>
+     </select>
+  </form>
+
+  <a th:href="@{/admin/applications(status='ALL', companyId=${selectedCompanyId})}"
+     class="btn" th:classappend="${selectedStatus == 'ALL'} ? 'btn-primary' : 'btn-outline'">All Apps</a>
+  <a th:href="@{/admin/applications(status='PENDING', companyId=${selectedCompanyId})}"
+     class="btn" th:classappend="${selectedStatus == 'PENDING'} ? 'btn-primary' : 'btn-outline'">📩 Applied</a>
+  <a th:href="@{/admin/applications(status='SHORTLISTED', companyId=${selectedCompanyId})}"
+     class="btn" th:classappend="${selectedStatus == 'SHORTLISTED'} ? 'btn-primary' : 'btn-outline'">⭐ Shortlisted</a>
+  <a th:href="@{/admin/applications(status='INTERVIEW_SCHEDULED', companyId=${selectedCompanyId})}"
+     class="btn" th:classappend="${selectedStatus == 'INTERVIEW_SCHEDULED'} ? 'btn-primary' : 'btn-outline'">📅 Interview</a>
+  <a th:href="@{/admin/applications(status='SELECTED', companyId=${selectedCompanyId})}"
+     class="btn" th:classappend="${selectedStatus == 'SELECTED'} ? 'btn-primary' : 'btn-outline'">✅ Selected</a>
+  <a th:href="@{/admin/applications(status='REJECTED', companyId=${selectedCompanyId})}"
+     class="btn" th:classappend="${selectedStatus == 'REJECTED'} ? 'btn-primary' : 'btn-outline'">❌ Rejected</a>
+</div>
+
+<div class="card fade-up fade-up-1">
+  <div class="card-header">
+    <div class="card-title">📋 Applications
+      <span style="color:var(--text-muted);font-weight:400;font-size:14px;" th:text="'(' + ${applications.size()} + ')'"></span>
+    </div>
+  </div>
+  <div class="empty-state" th:if="${applications.empty}">
+    <div class="icon">📋</div>
+    <p>No applications found for this status.</p>
+  </div>
+  <div class="table-wrap" th:if="${!applications.empty}">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Student</th>
+          <th>Job Title</th>
+          <th>Company</th>
+          <th>AI Match</th>
+          <th>Status</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="app,i : ${applications}">
+          <td style="color:var(--text-muted);font-size:12px;" th:text="${i.count}"></td>
+          <td>
+            <div style="font-weight:600;" th:text="${app.student.fullName}">Student</div>
+            <div style="font-size:11px;color:var(--text-muted);" th:text="${app.student.email}">Email</div>
+          </td>
+          <td th:text="${app.job.title}">Job</td>
+          <td th:text="${app.job.employer.fullName}">Company</td>
+          <td>
+            <span th:if="${app.aiMatchScore != null}" 
+                  th:style="'color:' + (${app.aiMatchScore >= 80} ? 'var(--success)' : (${app.aiMatchScore >= 50} ? 'var(--primary)' : 'var(--danger)'))"
+                  style="font-weight:700;" th:text="${#numbers.formatDecimal(app.aiMatchScore, 1, 0)} + '%'"></span>
+            <span th:if="${app.aiMatchScore == null}">—</span>
+          </td>
+          <td>
+            <span class="badge"
+                  th:classappend="${app.status.name() == 'PENDING'} ? 'badge-pending' :
+                                  (${app.status.name() == 'SHORTLISTED'} ? 'badge-shortlisted' :
+                                  (${app.status.name() == 'SELECTED'} ? 'badge-selected' :
+                                  (${app.status.name() == 'REJECTED'} ? 'badge-rejected' :
+                                  (${app.status.name() == 'INTERVIEW_SCHEDULED'} ? 'badge-scheduled' : 'badge-review'))))"
+                  th:text="${app.status.name().replace('_',' ')}">Status</span>
+          </td>
+          <td style="font-size:12px;" th:text="${#temporals.format(app.appliedAt,'dd MMM yyyy')}"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</main>
+</body>
+</html>
