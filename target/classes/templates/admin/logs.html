@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::main}, 'System Activity Logs', 'Audit trail of all system actions', ${admin}, 'logs')}"
+      xmlns:th="http://www.thymeleaf.org">
+<head><title>Activity Logs</title></head>
+<body>
+<main>
+<div class="card fade-up">
+  <div class="card-header">
+    <div class="card-title">📜 System Audit Logs</div>
+    <div class="card-subtitle">Real-time tracking of all user actions across the portal</div>
+  </div>
+  
+  <div class="empty-state" th:if="${logs.empty}">
+    <div class="icon">📜</div>
+    <p>No activity logs recorded yet.</p>
+  </div>
+
+  <div class="table-wrap" th:if="${!logs.empty}">
+    <table>
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>User</th>
+          <th>Action</th>
+          <th>Details</th>
+          <th>IP Address</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="log : ${logs}">
+          <td style="font-size:12px;white-space:nowrap;" th:text="${#temporals.format(log.createdAt, 'dd MMM yyyy HH:mm:ss')}"></td>
+          <td>
+            <div th:if="${log.user != null}">
+              <div style="font-weight:600;" th:text="${log.user.fullName}">User</div>
+              <div style="font-size:11px;color:var(--text-muted);" th:text="${log.user.role}">Role</div>
+            </div>
+            <span th:if="${log.user == null}" style="color:var(--text-muted);">System</span>
+          </td>
+          <td>
+            <span class="badge" 
+                  th:classappend="${log.action == 'LOGIN'} ? 'badge-review' : 
+                                  (${log.action == 'REGISTER'} ? 'badge-selected' : 
+                                  (${log.action == 'POST_JOB'} ? 'badge-primary' : 
+                                  (${log.action == 'APPLY_JOB'} ? 'badge-pending' : 'badge-shortlisted')))"
+                  th:text="${log.action}">Action</span>
+          </td>
+          <td style="font-size:13px;max-width:300px;overflow-wrap:break-word;" th:text="${log.details}">Details</td>
+          <td style="font-family:monospace;font-size:12px;" th:text="${log.ipAddress}">IP</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</main>
+</body>
+</html>

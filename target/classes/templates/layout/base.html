@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en" th:fragment="layout(content, pageTitle, pageSubtitle, pageUser, activePage)"
+  xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title th:text="${pageTitle != null ? pageTitle + ' — Campus Recruit' : 'Campus Recruitment Portal'}">Campus
+    Recruitment Portal</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}" />
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>" />
+</head>
+
+<body>
+  <div class="app-layout">
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- ══ Sidebar ══════════════════════════════════════════════════ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">✨</div>
+        <span style="color: var(--primary);">Campus Recruit<small style="color: var(--text-muted);">✨ Premium Portal ✨</small></span>
+      </div>
+
+      <!-- STUDENT NAV -->
+      <div th:if="${#authorization.expression('hasRole(''STUDENT'')')}" class="sidebar-section">
+        <div class="sidebar-section-label">🌟 Student Hub</div>
+        <nav>
+          <a th:href="@{/student/dashboard}" th:classappend="${activePage == 'dashboard'} ? 'active'">
+            <span class="nav-icon">🏠</span> Dashboard
+          </a>
+          <a th:href="@{/student/profile}" th:classappend="${activePage == 'profile'} ? 'active'">
+            <span class="nav-icon">👤</span> My Profile
+          </a>
+          <a th:href="@{/student/jobs}" th:classappend="${activePage == 'jobs'} ? 'active'">
+            <span class="nav-icon">💼</span> Browse Jobs
+          </a>
+          <a th:href="@{/student/applications}" th:classappend="${activePage == 'applications'} ? 'active'">
+            <span class="nav-icon">📋</span> My Applications
+            <span class="badge-count" th:if="${unreadCount > 0}" th:text="${unreadCount}"></span>
+          </a>
+        </nav>
+      </div>
+
+      <!-- EMPLOYER NAV -->
+      <div th:if="${#authorization.expression('hasRole(''EMPLOYER'')')}" class="sidebar-section">
+        <div class="sidebar-section-label">🏢 Employer Suite</div>
+        <nav>
+          <a th:href="@{/employer/dashboard}" th:classappend="${activePage == 'dashboard'} ? 'active'">
+            <span class="nav-icon">🏠</span> Dashboard
+          </a>
+          <a th:href="@{/employer/jobs}" th:classappend="${activePage == 'jobs'} ? 'active'">
+            <span class="nav-icon">📝</span> Manage Jobs
+          </a>
+          <a th:href="@{/employer/schedule}" th:classappend="${activePage == 'schedule'} ? 'active'">
+            <span class="nav-icon">📅</span> Interviews
+          </a>
+          <a th:href="@{/employer/profile}" th:classappend="${activePage == 'profile'} ? 'active'">
+            <span class="nav-icon">👤</span> Company Profile
+          </a>
+        </nav>
+      </div>
+
+      <!-- ADMIN NAV -->
+      <div th:if="${#authorization.expression('hasRole(''ADMIN'')')}" class="sidebar-section">
+        <div class="sidebar-section-label">🛡️ Admin Control</div>
+        <nav>
+          <a th:href="@{/admin/dashboard}" th:classappend="${activePage == 'dashboard'} ? 'active'">
+            <span class="nav-icon">🏠</span> Dashboard
+          </a>
+          <a th:href="@{/admin/users}" th:classappend="${activePage == 'users'} ? 'active'">
+            <span class="nav-icon">👥</span> Users
+          </a>
+          <a th:href="@{/admin/jobs}" th:classappend="${activePage == 'jobs'} ? 'active'">
+            <span class="nav-icon">💼</span> All Jobs
+          </a>
+          <a th:href="@{/admin/applications}" th:classappend="${activePage == 'applications'} ? 'active'">
+            <span class="nav-icon">📋</span> Applications
+          </a>
+          <a th:href="@{/admin/logs}" th:classappend="${activePage == 'logs'} ? 'active'">
+            <span class="nav-icon">📜</span> Activity Logs
+          </a>
+        </nav>
+      </div>
+
+      <!-- Footer / User -->
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="avatar" th:text="${#strings.substring(pageUser?.fullName ?: 'U', 0, 1)}">U</div>
+          <div class="user-info">
+            <div class="user-name" th:text="${pageUser?.fullName ?: 'User'}">User</div>
+            <div class="user-role" sec:authentication="principal.authorities[0].authority">Role</div>
+          </div>
+          <form th:action="@{/auth/logout}" method="post" style="margin:0">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <button type="submit" class="btn-logout" title="Logout">⏻</button>
+          </form>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ══ Main Content ═══════════════════════════════════════════════ -->
+    <div class="main-content">
+      <!-- Topbar -->
+      <header class="topbar">
+        <button onclick="toggleSidebar()" id="menu-btn">☰</button>
+        <div>
+          <div class="topbar-title" th:text="${pageTitle ?: 'Dashboard'}">Dashboard</div>
+          <div class="topbar-subtitle"><span style="color: var(--accent);">●</span> <span th:text="${pageSubtitle ?: 'Welcome back! 👋'}">Welcome back!</span></div>
+        </div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+          <!-- Timer section -->
+          <div th:if="${session.loginTime != null}" style="display:flex; flex-direction:column; align-items:flex-end; font-size:12px; color:var(--text-muted); background:var(--bg-card); padding:4px 10px; border-radius:6px; border:1px solid var(--border-color); margin-right:10px; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+            <div>Login Time: <span style="font-weight:600;color:var(--text);" th:text="${#temporals.format(session.loginTime, 'dd MMM, HH:mm')}"></span></div>
+            <div>Session Expires In: <span id="sessionTimer" style="font-weight:700;color:var(--danger);" th:data-endtime="${session.sessionEndTime}">10m 00s</span></div>
+          </div>
+          
+          <script>
+            const timerEl = document.getElementById('sessionTimer');
+            if (timerEl) {
+                const endTimeStr = timerEl.getAttribute('data-endtime');
+                if (endTimeStr) {
+                    const endTime = new Date(endTimeStr).getTime();
+                    const interval = setInterval(() => {
+                        const now = new Date().getTime();
+                        const distance = endTime - now;
+                        
+                        if (distance < 0) {
+                            clearInterval(interval);
+                            timerEl.innerText = "00m 00s";
+                            // Redirect to logout programmatically
+                            const form = document.createElement('form');
+                            form.method = 'post';
+                            form.action = '/auth/logout';
+                            const csrf = document.querySelector('input[name="_csrf"]');
+                            if(csrf) form.appendChild(csrf.cloneNode());
+                            document.body.appendChild(form);
+                            form.submit();
+                        } else {
+                            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                            timerEl.innerText = minutes + "m " + (seconds < 10 ? "0" : "") + seconds + "s";
+                        }
+                    }, 1000);
+                }
+            }
+          </script>
+
+          <div class="notif-bell" id="notifBell" onclick="toggleNotifDropdown(event)">
+            🔔
+            <span class="notif-badge" th:if="${unreadCount > 0}" th:text="${unreadCount}"></span>
+            
+            <!-- Notification Dropdown -->
+            <div class="notif-dropdown" id="notifDropdown">
+              <div class="notif-header">
+                Notifications
+                <a th:href="@{/notifications/mark-all-read}" style="font-size:11px;color:var(--primary);text-decoration:none;font-weight:500;">Mark all read</a>
+              </div>
+              <div class="notif-body">
+                <div th:if="${notifications == null or notifications.empty}" class="notif-empty">
+                  No new notifications
+                </div>
+                <div th:each="n : ${notifications}" class="notif-item" th:classappend="${!n.isRead} ? 'unread'" th:data-url="@{/notifications/read/{id}(id=${n.id})}" onclick="location.href=this.getAttribute('data-url')">
+                  <div class="notif-title" th:text="${n.title}">Title</div>
+                  <div class="notif-message" th:text="${n.message}">Message</div>
+                  <div class="notif-time" th:text="${#temporals.format(n.createdAt, 'MMM dd, HH:mm')}">Time</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <script>
+        function toggleNotifDropdown(e) {
+          e.stopPropagation();
+          const dropdown = document.getElementById('notifDropdown');
+          dropdown.classList.toggle('show');
+        }
+
+        window.onclick = function(e) {
+          const dropdown = document.getElementById('notifDropdown');
+          if (dropdown && dropdown.classList.contains('show')) {
+            if (!e.target.closest('.notif-bell')) {
+              dropdown.classList.remove('show');
+            }
+          }
+        }
+      </script>
+
+      <!-- Flash Messages -->
+      <div th:if="${success}" class="alert alert-success fade-up" style="margin:16px 28px 0;" th:text="${success}">
+      </div>
+      <div th:if="${error}" class="alert alert-error fade-up" style="margin:16px 28px 0;" th:text="${error}"></div>
+      <div th:if="${message}" class="alert alert-info fade-up" style="margin:16px 28px 0;" th:text="${message}"></div>
+
+      <!-- Page Body -->
+      <div class="page-content">
+        <th:block th:replace="${content}" />
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('show');
+    }
+  </script>
+</body>
+
+</html>

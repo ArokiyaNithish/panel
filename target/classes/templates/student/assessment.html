@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::main}, 'Online Assessment', 'Complete your assessment to proceed', ${student}, 'applications')}"
+      xmlns:th="http://www.thymeleaf.org">
+<head><title>Online Assessment</title></head>
+<body>
+<main>
+<div class="card fade-up">
+    <div class="card-header">
+        <div class="card-title">📝 Assessment for <span th:text="${application.job.title}" style="color:var(--primary);"></span></div>
+    </div>
+    <div style="padding:20px;">
+        <div class="alert alert-info">
+            <strong>Instructions:</strong> Answer the following 5 questions. You must score at least 3/5 to proceed to the interview round. Once submitted, it cannot be undone.
+        </div>
+
+        <form th:action="@{/student/applications/{id}/assessment/submit(id=${application.id})}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            
+            <div th:each="q, iterStat : ${questions}" style="margin-bottom:24px; padding-bottom:20px; border-bottom:1px solid #eee;">
+                <p style="font-weight:600; font-size:16px; margin-bottom:12px;">[[${iterStat.count}]]. [[${q.questionText}]]</p>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <label style="cursor:pointer; display:flex; align-items:center; gap:8px;">
+                        <input type="radio" th:name="'q_' + ${q.id}" value="A" required/> <span th:text="${q.optionA}"></span>
+                    </label>
+                    <label style="cursor:pointer; display:flex; align-items:center; gap:8px;">
+                        <input type="radio" th:name="'q_' + ${q.id}" value="B" required/> <span th:text="${q.optionB}"></span>
+                    </label>
+                    <label style="cursor:pointer; display:flex; align-items:center; gap:8px;">
+                        <input type="radio" th:name="'q_' + ${q.id}" value="C" required/> <span th:text="${q.optionC}"></span>
+                    </label>
+                    <label style="cursor:pointer; display:flex; align-items:center; gap:8px;">
+                        <input type="radio" th:name="'q_' + ${q.id}" value="D" required/> <span th:text="${q.optionD}"></span>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you want to submit your assessment? You cannot change your answers later.');">Submit Assessment</button>
+        </form>
+    </div>
+</div>
+</main>
+</body>
+</html>

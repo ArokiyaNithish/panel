@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::main}, 'Browse Jobs', 'Discover AI-matched opportunities', ${student}, 'jobs')}"
+      xmlns:th="http://www.thymeleaf.org">
+<head><title>Browse Jobs</title></head>
+<body>
+<main>
+<!-- Search Bar -->
+<div class="card fade-up" style="margin-bottom:20px;">
+  <form th:action="@{/student/jobs}" method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+    <div class="form-group" style="flex:2;min-width:200px;margin-bottom:0;">
+      <label class="form-label">Search Jobs</label>
+      <input type="text" name="keyword" class="form-control" placeholder="Java, Data Science, Marketing…" th:value="${keyword}"/>
+    </div>
+    <div class="form-group" style="flex:1;min-width:140px;margin-bottom:0;">
+      <label class="form-label">Category</label>
+      <select name="category" class="form-control">
+        <option value="">All Categories</option>
+        <option value="Engineering">Engineering</option>
+        <option value="Management">Management</option>
+        <option value="Design">Design</option>
+        <option value="Marketing">Marketing</option>
+        <option value="Finance">Finance</option>
+        <option value="Data Science">Data Science</option>
+      </select>
+    </div>
+    <div class="form-group" style="flex:1;min-width:140px;margin-bottom:0;">
+      <label class="form-label">Location</label>
+      <input type="text" name="location" class="form-control" placeholder="Chennai, Remote…"/>
+    </div>
+    <button type="submit" class="btn btn-primary">🔍 Search</button>
+    <a th:href="@{/student/jobs}" class="btn btn-outline">✕ Clear</a>
+  </form>
+</div>
+
+<!-- Job Count -->
+<div style="margin-bottom:16px;font-size:13px;color:var(--text-muted);" th:if="${!jobs.empty}">
+  Showing <strong th:text="${jobs.size()}" style="color:var(--text)">0</strong> jobs
+</div>
+
+<!-- Empty state -->
+<div class="empty-state" th:if="${jobs.empty}">
+  <div class="icon">🔍</div>
+  <p>No jobs found. Try a different search.</p>
+</div>
+
+<!-- Jobs Grid -->
+<div class="jobs-grid">
+  <div class="job-card fade-up" th:each="job,i : ${jobs}"
+       th:style="'animation-delay:' + ${i.index * 0.04} + 's'">
+    <div class="job-card-header">
+      <div>
+        <div class="job-title" th:text="${job.title}">Job Title</div>
+        <div class="job-company" th:text="${job.employer.fullName}">Company</div>
+      </div>
+      <span class="badge badge-active" th:if="${!appliedJobIds.contains(job.id)}">Open</span>
+      <span class="badge badge-review" th:if="${appliedJobIds.contains(job.id)}">Applied</span>
+    </div>
+
+    <div class="job-meta">
+      <div class="job-meta-item" th:if="${job.location != null}">📍 <span th:text="${job.location}"></span></div>
+      <div class="job-meta-item" th:if="${job.category != null}">🏷 <span th:text="${job.category}"></span></div>
+      <div class="job-meta-item" th:if="${job.salaryRange != null}">💰 <span th:text="${job.salaryRange}"></span></div>
+      <div class="job-meta-item" th:if="${job.openings != null}">👥 <span th:text="${job.openings} + ' openings'"></span></div>
+    </div>
+
+    <div class="job-skills" th:if="${job.skillsRequired != null}">
+      <span class="skill-tag"
+            th:each="sk : ${#strings.arraySplit(job.skillsRequired, ',')}"
+            th:text="${#strings.trim(sk)}"
+            th:if="${skStat.index < 4}"></span>
+    </div>
+
+    <p style="font-size:13px;color:var(--text-muted);-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;"
+       th:text="${job.description}"></p>
+
+    <div class="job-footer">
+      <span style="font-size:11px;color:var(--text-muted)"
+            th:text="'Posted ' + ${#temporals.format(job.postedAt,'dd MMM yyyy')}"></span>
+      <a th:href="@{'/student/jobs/' + ${job.id}}" class="btn btn-primary btn-sm">View &amp; Apply →</a>
+    </div>
+  </div>
+</div>
+</main>
+</body>
+</html>
